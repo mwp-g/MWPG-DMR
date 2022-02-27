@@ -12,7 +12,7 @@ The code is written and tested with the following packages:
 
 ## Data
 
-We provided our processed Math23K dataset, and you can make your own dataset in the same form.
+We provided our processed Math23K dataset in the `data` folder, and you can make your own dataset in the same form.
 
 ## Instructions
 
