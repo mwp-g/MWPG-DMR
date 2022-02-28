@@ -2,6 +2,8 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 import math
+import sys
+sys.path.append('../MWPG-DMR')
 from modules.decoding import CopyTokenDecoder
 from modules.transformer import Transformer, SinusoidalPositionalEmbedding, SelfAttentionMask, Embedding
 from utils.data import ListsToTensor, BOS, EOS, _back_to_txt_for_check
