@@ -225,6 +225,7 @@ class MatchingModel(nn.Module):
         super(MatchingModel, self).__init__()
         self.query_encoder = query_encoder
         self.response_encoder = response_encoder
+        self.bow = bow
 
     def forward(self, eq_orig, wd_orig, response, label_smoothing=0.):
         ''' query and response: [seq_len, batch_size]
@@ -244,14 +245,6 @@ class MatchingModel(nn.Module):
         log_probs = F.log_softmax(scores, -1)
         loss, _ = label_smoothed_nll_loss(log_probs, gold, label_smoothing, sum=True)
         loss = loss / bsz
-        if self.bow:
-            loss_bow_eq = self.eq_bow(r_src, eq_orig.transpose(0, 1))
-            # loss_bow_wd = self.wd_bow(r_src, wd_orig.transpose(0, 1))
-            loss_bow_r = self.response_bow(q_src, response.transpose(0, 1))
-            # loss = loss + loss_bow_eq + loss_bow_r
-            loss = loss + loss_bow_eq + loss_bow_r
-            # loss = loss + loss_bow_eq + loss_bow_r + loss_bow_wd
-        return loss, acc, bsz
     def work(self, eq_orig, wd_orig, response):
         ''' query and response: [seq_len x batch_size ]
         '''
@@ -517,6 +510,7 @@ class MatchingModel_wd(nn.Module):
         super(MatchingModel_wd, self).__init__()
         self.query_encoder = query_encoder
         self.response_encoder = response_encoder
+        self.bow = bow
 
     def forward(self, eq_orig, wd_orig, response, label_smoothing=0.):
         ''' query and response: [seq_len, batch_size]
@@ -533,14 +527,7 @@ class MatchingModel_wd(nn.Module):
         log_probs = F.log_softmax(scores, -1)
         loss, _ = label_smoothed_nll_loss(log_probs, gold, label_smoothing, sum=True)
         loss = loss / bsz
-        if self.bow:
-
-            loss_bow_wd = self.wd_bow(r_src, wd_orig.transpose(0, 1))
-            loss_bow_r = self.response_bow(q_src, response.transpose(0, 1))
-
-            loss = loss + loss_bow_wd + loss_bow_r
-
-        return loss, acc, bsz
+        
     def work(self, eq_orig, wd_orig, response):
         ''' query and response: [seq_len x batch_size ]
         '''
