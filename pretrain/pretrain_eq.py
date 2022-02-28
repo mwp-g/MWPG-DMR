@@ -38,6 +38,7 @@ def parse_config():
     parser.add_argument('--label_smoothing', type=float, default=0.1)
 
     # training
+    parser.add_argument('--bow', action='store_true', default=False)
     parser.add_argument('--resume_ckpt', type=str, default=None)
     parser.add_argument('--additional_negs', action='store_true')
     parser.add_argument('--lr', type=float, default=1e-4)
