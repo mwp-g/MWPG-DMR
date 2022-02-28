@@ -3,6 +3,8 @@ from torch import nn
 from torch.nn import Parameter
 import torch.nn.functional as F
 import math
+import sys
+sys.path.append('../MWPG-DMR')
 from modules.transformer import Transformer, SinusoidalPositionalEmbedding, SelfAttentionMask, Embedding
 
 def layer_norm(x, variance_epsilon=1e-12):
