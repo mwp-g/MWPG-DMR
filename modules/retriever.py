@@ -4,7 +4,8 @@ from torch import nn
 import torch.nn.functional as F
 import math
 import os, time, random, logging
-
+import sys
+sys.path.append('../MWPG-DMR')
 from modules.transformer import Transformer, SinusoidalPositionalEmbedding, Embedding
 from utils.utils import move_to_device, asynchronous_load
 from modules.module import label_smoothed_nll_loss, layer_norm, MonoEncoder, RnnEncoder
