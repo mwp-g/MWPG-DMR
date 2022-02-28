@@ -5,6 +5,8 @@ import torch.multiprocessing as mp
 import torch.distributed as dist
 import numpy as np
 import math
+import sys
+sys.path.append('../MWPG-DMR')
 from utils.data import Vocab, BOS, EOS, UNK, ListsToTensor, _back_to_txt_for_check
 from utils.optim import Adam, get_linear_schedule_with_warmup
 from utils.utils import move_to_device, set_seed, average_gradients, Statistics
@@ -36,6 +38,7 @@ def parse_config():
     parser.add_argument('--label_smoothing', type=float, default=0.1)
 
     # training
+    parser.add_argument('--bow', action='store_true', default=False)
     parser.add_argument('--resume_ckpt', type=str, default=None)
     parser.add_argument('--additional_negs', action='store_true')
     parser.add_argument('--lr', type=float, default=1e-4)
