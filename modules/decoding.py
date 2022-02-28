@@ -1,7 +1,8 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
-
+import sys
+sys.path.append('../MWPG-DMR')
 from modules.transformer import MultiheadAttention, FeedForwardLayer
 from modules.module import label_smoothed_nll_loss
 
