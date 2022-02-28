@@ -4,6 +4,8 @@ import logging
 import torch
 import numpy as np
 from utils.mips import MIPS
+import sys
+sys.path.append('../MWPG-DMR')
 from modules.retriever import ProjEncoder, get_features
 from utils.data import Vocab, BOS, EOS, ListsToTensor
 # import mkl
