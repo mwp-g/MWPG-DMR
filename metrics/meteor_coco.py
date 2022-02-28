@@ -12,6 +12,8 @@ import threading
 METEOR_JAR = 'meteor-1.5.jar'
 # print METEOR_JAR
 
+# Firstly, you shoule download paraphrase-en.gz from https://github.com/ruotianluo/coco-caption/tree/master/pycocoevalcap/meteor/data, and put the .gz to metrics/data
+
 class Meteor:
 
     def __init__(self):
