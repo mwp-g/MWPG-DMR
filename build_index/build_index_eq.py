@@ -3,6 +3,8 @@ import random, os
 import logging
 import torch
 import numpy as np
+import sys
+sys.path.append('../MWPG-DMR')
 from utils.mips import MIPS
 from modules.retriever import ProjEncoder, get_features
 from utils.data import Vocab, BOS, EOS, ListsToTensor
