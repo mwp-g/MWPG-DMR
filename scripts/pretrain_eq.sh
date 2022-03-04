@@ -12,7 +12,7 @@ python3 pretrain/pretrain_eq.py \
         --per_gpu_train_batch_size 512 \
         --dev_batch_size 512 \
         --total_train_steps 20000 \
-        --ckpt ${MTPATH}/ckpt_pre_math23k/eq \
+        --ckpt ${DMRPATH}/ckpt_pre_math23k/eq \
         --gpus 1 \
         --world_size 1
 
