@@ -40,7 +40,7 @@ NOTE: You should check detailed information in the corresponding shell scripts.
 
 If you run our code step by step with two 3090 GUPs, you'll get the same or similar results.
 
-| Bleu-4 | METEOR | ROUGE-L | ACC-eq |
+| BLEU-4 | METEOR | ROUGE-L | ACC-eq |
 | :----: | :----: | :-----: | :----: |
 | 0.392  | 0.375  |  0.630  | 0.548  |
 
