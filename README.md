@@ -19,7 +19,7 @@ We provide our processed Math23K dataset in the `data` folder, and you can creat
 The scripts to reproduce our results can be found in the `scripts` folder. Here we give an example to reproduce our experiments (Math23K). NOTE: You should check detailed information in the corresponding shell scripts.
 
 0. do `export MTPATH=where_you_hold_your_data_and_models`
-1. train data preprocessing: `sh scripts/prepare.sh` 
+1. training data preprocessing: `sh scripts/prepare.sh` 
 2. pre-training for equation-based retrieval module: `sh scripts/pretrain_eq.sh`
 3. pre-training for topic-words-based retrieval module: `sh scripts/pretrain_tw.sh`
 4. build the initial index: `sh scripts/build_index.sh`
