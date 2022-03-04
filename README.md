@@ -18,7 +18,7 @@ pip install -r requirements.txt
 
 ## Datasets 
 
-We provided our processed Math23K dataset in the `data` folder, and you can make your own dataset in the same form.
+We provided our processed Math23K dataset in the `data` folder.
 
 ## Instructions
 
