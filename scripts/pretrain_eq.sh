@@ -1,6 +1,6 @@
-dataset=${MTPATH}/math23k
+dataset=${DMRPATH}/math23k
 
-mkdir -p ${MTPATH}/ckpt_pre_math23k/eq
+mkdir -p ${DMRPATH}/ckpt_pre_math23k/eq
 
 python3 pretrain/pretrain_eq.py \
         --eq_src_vocab ${dataset}/eq_src.vocab \
