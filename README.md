@@ -38,7 +38,7 @@ NOTE: You should check detailed information in the corresponding shell scripts.
 
 ## Running results
 
-If you run our code step by step with two 3090 GUPs, you'll get the same or similar results.
+If you run our code step by step with two RTX-3090 GUPs, you'll get the same or similar results.
 
 | BLEU-4 | METEOR | ROUGE-L | ACC-eq |
 | :----: | :----: | :-----: | :----: |
