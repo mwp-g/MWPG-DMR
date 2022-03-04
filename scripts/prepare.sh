@@ -1,5 +1,5 @@
-main=${MTPATH}/data
-out=${MTPATH}/math23k
+main=${DMRPATH}/data
+out=${DMRPATH}/math23k
 
 mkdir -p ${out}
 
