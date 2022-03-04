@@ -12,7 +12,7 @@ python3 pretrain/pretrain_tw.py \
         --per_gpu_train_batch_size 512 \
         --dev_batch_size 512 \
         --total_train_steps 20000 \
-        --ckpt ${MTPATH}/ckpt_pre_math23k/tw \
+        --ckpt ${DMRPATH}/ckpt_pre_math23k/tw \
         --gpus 1 \
         --world_size 1
 
