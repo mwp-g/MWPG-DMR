@@ -1,6 +1,6 @@
-dataset=${MTPATH}/math23k
+dataset=${DMRPATH}/math23k
 
-ckpt_folder=${MTPATH}/ckpt_pre_math23k
+ckpt_folder=${DMRPATH}/ckpt_pre_math23k
 
 # the input_file contains target-side sentences, and pls make sure to remove duplicates
 
