@@ -18,11 +18,11 @@ pip install -r requirements.txt
 
 ## Datasets 
 
-We provided our processed Math23K dataset in the `data` folder.
+We provide our processed Math23K dataset in the `data` folder.
 
 ## Instructions
 
-The scripts to reproduce our results can be found in the `scripts` folder. Here we give an example to reproduce our experiments. 
+The scripts to reproduce our results can be found in the `scripts` folder. Here we give an example(Math23K) to reproduce our experiments. 
 
 The hyperparameter settings are all in the corresponding `.sh` folder.
 
