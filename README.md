@@ -28,7 +28,7 @@ The hyperparameter settings are all in the corresponding `.sh` folder.
 
 NOTE: You should check detailed information in the corresponding shell scripts.
 
-0. do `export MTPATH=where_you_hold_your_data_and_models`
+0. do `export DMRPATH=where_you_hold_your_data_and_models`
 1. training data preprocessing: `sh scripts/prepare.sh` 
 2. pre-training for equation-based retrieval module: `sh scripts/pretrain_eq.sh`
 3. pre-training for topic-words-based retrieval module: `sh scripts/pretrain_tw.sh`
