@@ -1,0 +1,9 @@
+torch==1.8.1+cu111
+sacrebleu
+transformers==2.11.0
+faiss-gpu==1.6.1
+jsonlines
+regex
+sklearn
+scipy
+jieba
