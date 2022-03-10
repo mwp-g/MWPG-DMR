@@ -130,7 +130,7 @@ def extract_wd(wd_list, wd_orig, wd_every):
             # keywords = result1[:2]
 
             for h in keywords:
-                if len(temp_every_wd) <= 3:
+                if len(temp_every_wd) <= 6:
                     temp_every_wd.append(h)
                     for f in list(h):            # for chinese
                         every_wd.append(f)
