@@ -34,5 +34,5 @@ python3 build_index/build_index_tw.py \
         --index_path ${ckpt_folder}/wd_mips_index \
         --only_dump_feat
 
-cp ${dataset}/train/train.tgt.txt ${ckpt_folder}/candidates.txt
-cp ${dataset}/train/train.processed.tgt.txt ${ckpt_folder}/candidates.processed.txt
+cp ${dataset}/train.tgt.txt ${ckpt_folder}/candidates.txt
+cp ${dataset}/train.processed.tgt.txt ${ckpt_folder}/candidates.processed.txt
