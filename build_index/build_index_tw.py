@@ -17,7 +17,7 @@ import os
 def parse_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--only_dump_feat', action='store_true', default=True)
+    parser.add_argument('--only_dump_feat', action='store_true')
     parser.add_argument('--input_file', type=str)
     parser.add_argument('--args_path', type=str)
     parser.add_argument('--ckpt_path', type=str)
