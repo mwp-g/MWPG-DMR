@@ -33,6 +33,7 @@ def parse_config():
     parser.add_argument('--tgt_processed_vocab_path', type=str)
     # Only for debug and analyze
     parser.add_argument('--hot_index', default=None)
+    parser.add_argument('--dump_path', default=None)
 
     return parser.parse_args()
 
