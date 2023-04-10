@@ -1,3 +1,5 @@
+import sys
+
 import torch
 import argparse, os, logging
 import random
@@ -5,14 +7,14 @@ import torch.multiprocessing as mp
 import torch.distributed as dist
 import numpy as np
 import math
-import sys
-sys.path.append('../MWPG-DMR')
-from utils.data import Vocab, BOS, EOS, UNK, ListsToTensor, _back_to_txt_for_check
-from utils.optim import Adam, get_linear_schedule_with_warmup
-from utils.utils import move_to_device, set_seed, average_gradients, Statistics
-from modules.retriever import MatchingModel
+from data import Vocab, BOS, EOS, UNK, ListsToTensor, _back_to_txt_for_check
+from optim import Adam, get_linear_schedule_with_warmup
+from utils import move_to_device, set_seed, average_gradients, Statistics
+from retriever import MatchingModel
 from collections import Counter
 import os
+import sys
+sys.path.append('../MWPG-DMR')
 os.environ['CUDA_VISIBLE_DEVICES'] = "1"
 logger = logging.getLogger(__name__)
 
