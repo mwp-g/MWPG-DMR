@@ -61,4 +61,3 @@ if __name__ == "__main__":
         tgt_lines.append(tgt_line)
         tgt_processed_lines.append(tgt_processed_line)
     fo.close()
-
