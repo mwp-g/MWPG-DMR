@@ -2,14 +2,16 @@ import torch
 import sacrebleu
 import json, re, logging
 import numpy as np
-from utils.data import Vocab, DataLoader, BOS, EOS
-from modules.generator import RetrieverGenerator
-from utils.utils import move_to_device
-from modules.retriever import Retriever
+from data import Vocab, DataLoader, BOS, EOS, DataLoader_test
+from generator import RetrieverGenerator
+from utils import move_to_device
+from retriever import Retriever
 import argparse, os, time
-from metrics.rouge_coco import Rouge
-from metrics.bleu_coco import Bleu
-from metrics.meteor_coco import Meteor
+from rouge_coco import Rouge
+from bleu_coco import Bleu
+from meteor_coco import Meteor
+from pyltp import SentenceSplitter, Segmentor, Postagger, Parser, NamedEntityRecognizer, SementicRoleLabeller
+
 logger = logging.getLogger(__name__)
 
 def parse_config():
@@ -18,6 +20,8 @@ def parse_config():
     parser.add_argument('--load_path', type=str)
     parser.add_argument('--index_path', type=str)
     parser.add_argument('--test_data', type=str)
+    parser.add_argument('--words_num', type=int)
+    parser.add_argument('--datasets', type=str)
     parser.add_argument('--test_batch_size', type=int, default=512)
     parser.add_argument('--beam_size', type=int, default=5)
     parser.add_argument('--alpha', type=float, default=0.6)
@@ -32,14 +36,16 @@ def parse_config():
     parser.add_argument('--tgt_vocab_path', type=str)
     parser.add_argument('--tgt_processed_vocab_path', type=str)
     # Only for debug and analyze
-    parser.add_argument('--hot_index', default=None)
     parser.add_argument('--dump_path', default=None)
+    parser.add_argument('--hot_index', default=None)
 
     return parser.parse_args()
 
 def generate_batch(model, batch, beam_size, alpha, max_time_step):
+    # print("-------generate_batch-------")
     token_batch = []
     beams = model.work(batch, beam_size, max_time_step)
+    # print("--------wored---------")
     for beam in beams:
         best_hyp = beam.get_k_best(1, alpha)[0]
         predicted_token = [token for token in best_hyp.seq[1:-1]]
@@ -48,7 +54,7 @@ def generate_batch(model, batch, beam_size, alpha, max_time_step):
 
 def validate(device, model, test_data, beam_size=5, alpha=0.6, max_time_step=100, dump_path=None):
     """For Development Only"""
-
+    # print("-------validate-------")
     rouge = Rouge()
     bleu = Bleu()
     meteor = Meteor()
@@ -75,9 +81,12 @@ def validate(device, model, test_data, beam_size=5, alpha=0.6, max_time_step=100
     rouge_scores = []
     for r, s in zip(ref_stream, sys_stream):
         rouge_score, _ = rouge.compute_score([s], [r])
+        # print("rouge_score",rouge_score)
         blue_4_score, _ = bleu.compute_score([s], [r])
         blue_4_score = blue_4_score[3]
+        # print("blue_4_score",blue_4_score)
         merteor_score, _ = meteor.compute_score([r], [s])
+        # print("merteor_score",merteor_score)
         rouge_scores.append(rouge_score)
         blue_4_scores.append(blue_4_score)
         meteor_scores.append(merteor_score)
@@ -117,17 +126,22 @@ if __name__ == "__main__":
     else:
         device = torch.device('cuda', args.device)
 
+    MODELDIR = "/home/wangxiaowei/MWPG-DMR/ltp_data"
+    segmentor = Segmentor(os.path.join(MODELDIR, "cws.model"))
+    postagger = Postagger(os.path.join(MODELDIR, "pos.model"))
+    parser = Parser(os.path.join(MODELDIR, "parser.model"))
+
     retriever = Retriever.from_pretrained(model_args.num_retriever_heads, vocabs, args.index_path if args.index_path else model_args.retriever, model_args.nprobe, model_args.topk, args.device, use_response_encoder=(model_args.rebuild_every > 0))
     model = RetrieverGenerator(vocabs, retriever, model_args.share_encoder,
             model_args.embed_dim, model_args.ff_embed_dim, model_args.num_heads, model_args.dropout, model_args.mem_dropout,
-            model_args.enc_layers, model_args.dec_layers, model_args.mem_enc_layers, model_args.label_smoothing)
+            model_args.enc_layers, model_args.dec_layers, model_args.mem_enc_layers, model_args.label_smoothing, args.datasets, segmentor, postagger, parser)
 
     if args.hot_index is not None:
         model.retriever.drop_index()
         torch.cuda.empty_cache()
         model.retriever.update_index(args.hot_index, model_args.nprobe)
 
-    test_data = DataLoader(vocabs, args.test_data, args.test_batch_size, for_train=False)
+    test_data = DataLoader(vocabs, args.test_data, args.test_batch_size, for_train=False, words_num=args.words_num)
 
     for test_model in test_models:
         model.load_state_dict(torch.load(test_model)['model'])
