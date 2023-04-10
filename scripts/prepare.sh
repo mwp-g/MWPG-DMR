@@ -3,7 +3,7 @@ out=${DMRPATH}/math23k
 
 mkdir -p ${out}
 
-python3 prepare/prepare.py \
+python3 prepare.py \
 --train_eq_src ${main}/math23k/train/train_eq_src.txt \
 --train_wd_src ${main}/math23k/train/train_wd_src.txt \
 --train_wd_orig ${main}/math23k/train/train_wd_src_orig.txt \
@@ -15,7 +15,7 @@ python3 prepare/prepare.py \
 --vocab_processed_tgt ${out}/tgt.processed.vocab \
 --output_file ${out}/train.txt
 
-python3 prepare/prepare_dev_test.py \
+python3 prepare_dev_test.py \
 --train_eq_src ${main}/math23k/dev/dev_eq_src.txt \
 --train_wd_src ${main}/math23k/dev/dev_wd_src.txt \
 --train_wd_orig ${main}/math23k/dev/dev_wd_src_orig.txt \
@@ -23,7 +23,7 @@ python3 prepare/prepare_dev_test.py \
 --train_processed_data_tgt ${main}/math23k/dev/dev_processed_tgt.txt \
 --output_file ${out}/dev.txt
 
-python3 prepare/prepare_dev_test.py \
+python3 prepare_dev_test.py \
 --train_eq_src ${main}/math23k/test/test_eq_src.txt \
 --train_wd_src ${main}/math23k/test/test_wd_src.txt \
 --train_wd_orig ${main}/math23k/test/test_wd_src_orig.txt \
@@ -33,3 +33,4 @@ python3 prepare/prepare_dev_test.py \
 
 cp ${main}/math23k/train/train.tgt.txt ${out}/train.tgt.txt
 cp ${main}/math23k/train/train.processed.tgt.txt ${out}/train.processed.tgt.txt
+
