@@ -1,17 +1,19 @@
 import argparse
 import random, os
 import logging
+import sys
 import torch
 import numpy as np
-import sys
-sys.path.append('../MWPG-DMR')
-from utils.mips import MIPS
-from modules.retriever import ProjEncoder, get_features
-from utils.data import Vocab, BOS, EOS, ListsToTensor
+
+from mips import MIPS
+from retriever import ProjEncoder, get_features
+from data import Vocab, BOS, EOS, ListsToTensor
+
 # import mkl
 # mkl.get_max_threads()
 logger = logging.getLogger(__name__)
 import os
+sys.path.append('../MWPG-DMR')
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 def parse_args():
@@ -23,30 +25,31 @@ def parse_args():
     parser.add_argument('--ckpt_path', type=str)
     parser.add_argument('--vocab_path', type=str)
     parser.add_argument('--index_path', type=str,
-        help='can be saving path if train_index == True else loading path')
-    parser.add_argument('--train_index', type=bool, default=True, 
-        help='whether to train an index from scratch')
+                        help='can be saving path if train_index == True else loading path')
+    parser.add_argument('--train_index', type=bool, default=True,
+                        help='whether to train an index from scratch')
     parser.add_argument('--add_to_index', type=bool, default=True,
-        help='whether to add instances to the to-be-trained/exsiting index')
+                        help='whether to add instances to the to-be-trained/exsiting index')
 
     parser.add_argument('--batch_size', type=int, default=512)
     parser.add_argument('--index_type', type=str, default='IVF1024_HNSW32,SQ8')
     parser.add_argument('--efSearch', type=int, default=128)
     parser.add_argument('--nprobe', type=int, default=64)
     parser.add_argument('--max_training_instances', type=int, default=100000)
-    
+
     parser.add_argument('--max_norm', type=float, default=None,
-        help='if given, use it as max_norm in ip_to_l2 tranformation')
+                        help='if given, use it as max_norm in ip_to_l2 tranformation')
     parser.add_argument('--max_norm_cf', type=float, default=1.0,
-        help='if max_norm is not given, max_norm = max_norm_in_training * max_norm_cf')
+                        help='if max_norm is not given, max_norm = max_norm_in_training * max_norm_cf')
     parser.add_argument('--norm_th', type=float, default=999,
-        help='will discard a vector if its norm is bigger than this value')
+                        help='will discard a vector if its norm is bigger than this value')
     parser.add_argument('--add_every', type=int, default=100000)
-    return parser.parse_args() 
+    return parser.parse_args()
+
 
 def main(args):
-    logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s - %(message)s',
-            datefmt = '%m/%d/%Y %H:%M:%S', level = logging.INFO)
+    logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
+                        datefmt='%m/%d/%Y %H:%M:%S', level=logging.INFO)
     logger.info('Loading model...')
     logger.info("using %d gpus", torch.cuda.device_count())
     device = torch.device('cuda', 0)
@@ -69,8 +72,9 @@ def main(args):
         max_norm = torch.load(os.path.join(os.path.dirname(args.index_path), 'eq_max_norm.pt'))
         used_data = [x[0] for x in data]
         used_ids = np.array([x[1] for x in data])
-        used_data, used_ids, _ = get_features(args.batch_size, args.norm_th, vocab, model, used_data, used_ids, max_norm)
-        used_data = used_data[:,1:]
+        used_data, used_ids, _ = get_features(args.batch_size, args.norm_th, vocab, model, used_data, used_ids,
+                                              max_norm)
+        used_data = used_data[:, 1:]
         assert (used_ids == np.sort(used_ids)).all()
         logger.info('Dumping %d instances', used_data.shape[0])
         torch.save(torch.from_numpy(used_data), os.path.join(os.path.dirname(args.index_path), 'eq_feat.pt'))
@@ -83,9 +87,10 @@ def main(args):
         used_data = [x[0] for x in data[:args.max_training_instances]]
         used_ids = np.array([x[1] for x in data[:args.max_training_instances]])
         logger.info('Computing feature for training')
-        used_data, used_ids, max_norm = get_features(args.batch_size, args.norm_th, vocab, model, used_data, used_ids, max_norm_cf=args.max_norm_cf)
+        used_data, used_ids, max_norm = get_features(args.batch_size, args.norm_th, vocab, model, used_data, used_ids,
+                                                     max_norm_cf=args.max_norm_cf)
         logger.info('Using %d instances for training', used_data.shape[0])
-        mips = MIPS(model_args.output_dim+1, args.index_type, efSearch=args.efSearch, nprobe=args.nprobe) 
+        mips = MIPS(model_args.output_dim + 1, args.index_type, efSearch=args.efSearch, nprobe=args.nprobe)
         mips.to_gpu()
         mips.train(used_data)
         mips.to_cpu()
@@ -101,14 +106,16 @@ def main(args):
     if args.add_to_index:
         cur = 0
         while cur < len(data):
-            used_data = [x[0] for x in data[cur:cur+args.add_every]]
-            used_ids = np.array([x[1] for x in data[cur:cur+args.add_every]])
+            used_data = [x[0] for x in data[cur:cur + args.add_every]]
+            used_ids = np.array([x[1] for x in data[cur:cur + args.add_every]])
             cur += args.add_every
             logger.info('Computing feature for indexing')
-            used_data, used_ids, _ = get_features(args.batch_size, args.norm_th, vocab, model, used_data, used_ids, max_norm)
+            used_data, used_ids, _ = get_features(args.batch_size, args.norm_th, vocab, model, used_data, used_ids,
+                                                  max_norm)
             logger.info('Adding %d instances to index', used_data.shape[0])
             mips.add_with_ids(used_data, used_ids)
         mips.save(args.index_path)
+
 
 if __name__ == "__main__":
     args = parse_args()
