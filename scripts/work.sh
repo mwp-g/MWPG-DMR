@@ -8,7 +8,9 @@ python3 work.py \
         --load_path ${gen_ckpt} \
         --index_path ${pre_ckpt} \
         --test_data ${dataset}/test.txt \
-        --output_path ${DMRPATH}/result/res.txt \
+        --datasets math23k \
+        --words_num 4 \
+        --output_path ${DMRPATH}/result/math23k_5.txt \
         --eq_src_vocab_path ${dataset}/eq_src.vocab \
         --wd_src_vocab_path ${dataset}/wd_src.vocab \
         --tgt_vocab_path ${dataset}/tgt.vocab \
