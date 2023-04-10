@@ -3,13 +3,16 @@ import argparse, os, logging, time
 import random
 import torch.multiprocessing as mp
 import torch.distributed as dist
-from utils.data import Vocab, DataLoader, BOS, EOS
-from utils.optim import Adam, get_inverse_sqrt_schedule_with_warmup
-from utils.utils import move_to_device, set_seed, average_gradients, Statistics
-from modules.generator import RetrieverGenerator
+from data import Vocab, DataLoader, BOS, EOS
+from optim import Adam, get_inverse_sqrt_schedule_with_warmup
+from utils import move_to_device, set_seed, average_gradients, Statistics
+from generator import RetrieverGenerator
 from work import validate
-from modules.retriever import Retriever, MatchingModel
-from pretrain.pretrain_eq import DataLoader as RetrieverDataLoader
+from stanfordcorenlp import StanfordCoreNLP
+import sys
+from retriever import Retriever, MatchingModel
+from pyltp import SentenceSplitter, Segmentor, Postagger, Parser, NamedEntityRecognizer, SementicRoleLabeller
+from pretrain_eq import DataLoader as RetrieverDataLoader
 # logger = logging.getLogger(__name__)
 os.environ['CUDA_VISIBLE_DEVICES'] = "0,1"
 logger = logging.getLogger(__name__)
@@ -84,7 +87,6 @@ def main(args, local_rank):
     vocabs['tgt'] = Vocab(args.tgt_vocab, 0, [BOS, EOS])
     vocabs['tgt_processed'] = Vocab(args.tgt_processed_vocab, 0, [BOS, EOS])
 
-
     if args.world_size == 1 or (dist.get_rank() == 0):
         logger.info(args)
         for name in vocabs:
@@ -102,10 +104,19 @@ def main(args, local_rank):
     retriever = Retriever.from_pretrained(args.num_retriever_heads, vocabs, args.retriever, args.nprobe, args.topk, local_rank, use_response_encoder=(args.rebuild_every > 0))
 
     logger.info("building retriever + generator")
+
+    # LTP_DIR = "/home/wangxiaowei/MWPG-DMR/ltp_data"
+    MODELDIR = "/root/autodl-tmp/ltp_data"
+    segmentor = Segmentor(os.path.join(MODELDIR, "cws.model"))
+    postagger = Postagger(os.path.join(MODELDIR, "pos.model"))
+    parser = Parser(os.path.join(MODELDIR, "parser.model"))
+    # nlp = StanfordCoreNLP("/root/autodl-tmp/MWPG-DMR/stanford-corenlp-4.5.2", port=42343)
+
     model = RetrieverGenerator(vocabs, retriever, args.share_encoder,
             args.embed_dim, args.ff_embed_dim, args.num_heads, args.dropout, args.mem_dropout,
-            args.enc_layers, args.dec_layers, args.mem_enc_layers, args.label_smoothing)
-            
+            args.enc_layers, args.dec_layers, args.mem_enc_layers, args.label_smoothing,
+                               args.datasets, segmentor, postagger, parser)
+
     if args.resume_ckpt:
         model.load_state_dict(torch.load(args.resume_ckpt)['model'])
     else:
@@ -116,13 +127,17 @@ def main(args, local_rank):
 
     model = model.to(device)
 
+    total_params = sum(p.numel() for p in model.parameters())
+    print(f'{total_params:,} total parameters.')
+    print(f'{total_params / (1024 * 1024):.2f}M total parameters.')
+
     retriever_params = [ v for k, v in model.named_parameters() if k.startswith('retriever.')]
     other_params = [ v for k, v in model.named_parameters() if not k.startswith('retriever.')]
 
     # optimizer = Adam([ {'params':retriever_params, 'lr':args.embed_dim**-0.5*0.1},
     #                    {'params':other_params, 'lr': args.embed_dim**-0.5}], betas=(0.9, 0.98), eps=1e-9)
     optimizer = Adam([{'params': retriever_params, 'lr': 0},
-                      {'params': other_params, 'lr': args.embed_dim ** -0.5}], betas=(0.9, 0.98), eps=1e-9)
+                      {'params': other_params, 'lr': args.embed_dim ** -0.2}], betas=(0.9, 0.98), eps=1e-9)
     lr_schedule = get_inverse_sqrt_schedule_with_warmup(optimizer, args.warmup_steps, args.total_train_steps)
     train_data = DataLoader(vocabs, args.train_data, args.per_gpu_train_batch_size,
                             for_train=True, rank=local_rank, num_replica=args.world_size)
@@ -142,7 +157,8 @@ def main(args, local_rank):
             #step_start = time.time()
             batch = move_to_device(batch, device)
             loss, acc = model(batch, update_mem_bias=(global_step > args.update_retriever_after))
-            
+            # print("--------get trained---------")
+
             tr_stat.update({'loss':loss.item() * batch['tgt_num_tokens'],
                             'tokens':batch['tgt_num_tokens'],
                             'acc':acc})
@@ -162,7 +178,7 @@ def main(args, local_rank):
             lr_schedule.step()
             optimizer.zero_grad()
             global_step += 1
-         
+
             if args.world_size == 1 or (dist.get_rank() == 0):
                 if global_step % args.print_every == -1 % args.print_every:
                     # logging.set_verbosity(logging.INFO)
@@ -170,13 +186,17 @@ def main(args, local_rank):
                     # logging.set_verbosity(logging.DEBUG)
                     tr_stat = Statistics()
                 if global_step % args.eval_every == -1 % args.eval_every:
+                    # print("-----begin val--------")
                     model.eval()
+                    # print("-----begined val--------")
                     max_time_step = 256 if global_step > 2*args.warmup_steps else 5
                     bleus = []
                     rouges = []
                     meteors = []
                     for cur_dev_data in args.dev_data:
+                        # print("-----begin valdata--------")
                         dev_data = DataLoader(vocabs, cur_dev_data, args.dev_batch_size, for_train=False)
+                        # print("-----begined valdata--------")
                         bleu, meteor, rouge = validate(device, model, dev_data, beam_size=5, alpha=0.6, max_time_step=max_time_step)
                         bleus.append(bleu)
                         rouges.append(rouge)
@@ -220,6 +240,7 @@ def main(args, local_rank):
                 break
         epoch += 1
     logger.info('rank %d, finish training after %d steps', local_rank, global_step)
+    # nlp.close()
 
 def init_processes(local_rank, args, backend='nccl'):
     os.environ['MASTER_ADDR'] = args.MASTER_ADDR
