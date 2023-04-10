@@ -61,11 +61,21 @@ if __name__ == "__main__":
         tgt_line = tgt_line.strip().split()
         tgt_processed_line = tgt_processed_line.strip().split()
         tot_lines += 1
+        # if args.min_len <= len(src_line) <= args.max_len and args.min_len <= len(tgt_line) <= args.max_len:
+        #     if len(src_line)/len(tgt_line) > args.ratio:
+        #         continue
+        #     if len(tgt_line)/len(src_line) > args.ratio:
+        #         continue
+            # fo.write(' '.join(src_line) + '\t' + ' '.join(tgt_line) + '\n')
         fo.write(' '.join(eq_src_line) + '\t' + ' '.join(wd_src_line) + '\t' + ' '.join(tgt_line) + '\t' + ' '.join(tgt_processed_line) + '\t' + ' '.join(wd_orig_line) + '\n')
+        # fo.write(' '.join(eq_src_line) + '\t' + ' '.join(wd_src_line) + '\t' + ' '.join(tgt_line) + '\n' )
+
         eq_src_lines.append(eq_src_line)
         wd_src_lines.append(wd_src_line)
         tgt_lines.append(tgt_line)
+        # tgt_lines.append(tgt_processed_line)
         tgt_processed_lines.append(tgt_processed_line)
+        # tgt_processed_lines.append(tgt_line)
     fo.close()
     eq_src_vocab = make_vocab(eq_src_lines)
     wd_src_vocab = make_vocab(wd_src_lines)
