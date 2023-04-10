@@ -2,19 +2,21 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 import math
+from stanfordcorenlp import StanfordCoreNLP
+from decoding import CopyTokenDecoder
+from transformer import Transformer, SinusoidalPositionalEmbedding, SelfAttentionMask, Embedding
+from data import ListsToTensor, BOS, EOS, _back_to_txt_for_check
+from search import Hypothesis, Beam, search_by_batch
+from module import MonoEncoder, MonoEncoder_spc, MonoEncoder_spc_tr
+from utils import extract_wd, move_to_device, extract_wd_en
 import sys
 sys.path.append('../MWPG-DMR')
-from modules.decoding import CopyTokenDecoder
-from modules.transformer import Transformer, SinusoidalPositionalEmbedding, SelfAttentionMask, Embedding
-from utils.data import ListsToTensor, BOS, EOS, _back_to_txt_for_check
-from utils.search import Hypothesis, Beam, search_by_batch
-from modules.module import MonoEncoder, MonoEncoder_spc
-from utils.utils import extract_wd, move_to_device
 
 class RetrieverGenerator(nn.Module):
     def __init__(self, vocabs, retriever, share_encoder,
                 embed_dim, ff_embed_dim, num_heads, dropout, mem_dropout,
-                enc_layers, dec_layers, mem_enc_layers, label_smoothing):
+                enc_layers, dec_layers, mem_enc_layers, label_smoothing, datasets,
+                segmentor, postagger, parser):
         super(RetrieverGenerator, self).__init__()
         self.vocabs = vocabs
 
@@ -22,6 +24,7 @@ class RetrieverGenerator(nn.Module):
         self.share_encoder = share_encoder
         self.retriever = retriever
         self.encoder = MonoEncoder_spc(vocabs['eq_src'], vocabs['tgt'], enc_layers, embed_dim, ff_embed_dim, num_heads, dropout)
+        # self.encoder = MonoEncoder(vocabs['tgt'], mem_enc_layers, embed_dim, ff_embed_dim, num_heads, mem_dropout)
         ####Retriever####
 
         self.tgt_embed = Embedding(vocabs['tgt'].size, embed_dim, vocabs['tgt'].padding_idx)
@@ -39,6 +42,12 @@ class RetrieverGenerator(nn.Module):
         self.mem_bias_scale = nn.Parameter(torch.ones(retriever.num_heads))
         self.mem_bias_base = nn.Parameter(torch.zeros(retriever.num_heads))
         self.dropout = dropout
+        self.datasets = datasets
+
+        self.segmentor = segmentor
+        self.postagger = postagger
+        self.parser = parser
+        # self.nlp = nlp
 
     ####Retriever####
     def retrieve_step(self, inp, work):
@@ -48,14 +57,25 @@ class RetrieverGenerator(nn.Module):
     ####Retriever####
 
     def encode_step(self, inp, work=False, update_mem_bias=True):
-
+        # print("---------encode_step---------")
         mem_ret = self.retrieve_step(inp, work)
 
-        wd_tokens = extract_wd(mem_ret['wd_retrieval_raw_sents'], inp['wd_orig'], inp['wd_every'])
+        if self.datasets == "math23k":
+            wd_tokens = extract_wd(mem_ret['wd_retrieval_raw_sents'], inp['wd_orig'], inp['wd_every'], self.segmentor, self.postagger, self.parser)
+        if self.datasets == "mawps":
+            # print(self.datasets)
+            # nlp = StanfordCoreNLP("/root/autodl-tmp/MWPG-DMR/stanford-corenlp-4.5.2")
+            wd_tokens = extract_wd_en(mem_ret['wd_retrieval_raw_sents'], inp['wd_orig'], inp['wd_every'])
+            # nlp.close()
+        if self.datasets == "dolphin18k":
+            wd_tokens = extract_wd_en(mem_ret['wd_retrieval_raw_sents'], inp['wd_orig'], inp['wd_every'])
+
         wd_token = torch.from_numpy(ListsToTensor(wd_tokens, self.vocabs['tgt']))
         wd_token = move_to_device(wd_token, inp['eq_tokens'].device)
-
         src_repr, src_mask = self.encoder(inp['eq_tokens'], wd_token)
+
+        # src_repr, src_mask = self.encoder(inp['eq_tokens'], inp['wd_tokens'])
+
         inp.update(mem_ret)
         mem_repr, mem_mask = self.mem_encoder(inp['all_mem_tokens'])
 
@@ -128,6 +148,7 @@ class RetrieverGenerator(nn.Module):
 
     @torch.no_grad()
     def work(self, data, beam_size, max_time_step, min_time_step=1):
+        # print("--------work--------")
         src_repr, src_mask, mem_repr, mem_mask, copy_seq, mem_bias = self.encode_step(data, work=True)
         mem_dict = {'encoder_state':src_repr,
                     'encoder_state_mask':src_mask,
