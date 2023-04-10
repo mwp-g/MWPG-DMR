@@ -109,3 +109,41 @@ class RnnEncoder(nn.Module):
         # Decode hidden states of all time steps
         # out = self.linear(out)
         return src, src_mask
+
+class MonoEncoder_spc_tr(nn.Module):
+    def __init__(self, vocab_eq, vocab_wd, layers, embed_dim, ff_embed_dim, num_heads, dropout):
+        super(MonoEncoder_spc_tr, self).__init__()
+        self.vocab_eq = vocab_eq
+        self.vocab_wd = vocab_wd
+
+        self.eq_embed = Embedding(vocab_eq.size, embed_dim, vocab_eq.padding_idx)
+        self.eq_pos_embed = SinusoidalPositionalEmbedding(embed_dim)
+        self.wd_embed = Embedding(vocab_wd.size, embed_dim, vocab_wd.padding_idx)
+        self.wd_pos_embed = SinusoidalPositionalEmbedding(embed_dim)
+
+        self.embed_scale = math.sqrt(embed_dim)
+
+        self.eq_transformer = Transformer(2, embed_dim, ff_embed_dim, num_heads, dropout)
+        # self.eq_RNN = nn.GRU(embed_dim, hidden_size=256, num_layers=2, batch_first=False, bidirectional=True)
+        self.wd_transformer = Transformer(layers, embed_dim, ff_embed_dim, num_heads, dropout)
+        self.dropout = dropout
+
+    def forward(self, input_eq, input_wd):
+        eq_repr = self.embed_scale * self.eq_embed(input_eq) + self.eq_pos_embed(input_eq)
+        # eq_repr = F.dropout(eq_repr, p=self.dropout, training=self.training)
+        eq_mask = torch.eq(input_eq, self.vocab_eq.padding_idx)
+        eq_repr = self.wd_transformer(eq_repr, self_padding_mask=eq_mask)
+        # eq_repr = self.eq_RNN(eq_repr)
+        # eq_repr = eq_repr[0]
+        # return eq_repr, eq_mask
+
+        wd_repr = self.embed_scale * self.wd_embed(input_wd) + self.wd_pos_embed(input_wd)
+        wd_repr = F.dropout(wd_repr, p=self.dropout, training=self.training)
+        wd_mask = torch.eq(input_wd, self.vocab_wd.padding_idx)
+        wd_repr = self.wd_transformer(wd_repr, self_padding_mask=wd_mask)
+        # return wd_repr, wd_mask
+
+        src_repr = torch.cat((eq_repr, wd_repr), 0)
+        src_mask = torch.cat((eq_mask, wd_mask), 0)
+
+        return src_repr, src_mask
