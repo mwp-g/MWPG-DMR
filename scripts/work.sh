@@ -10,7 +10,7 @@ python3 work.py \
         --test_data ${dataset}/test.txt \
         --datasets math23k \
         --words_num 4 \
-        --output_path ${DMRPATH}/result/math23k_5.txt \
+        --output_path ${DMRPATH}/result/math23k.txt \
         --eq_src_vocab_path ${dataset}/eq_src.vocab \
         --wd_src_vocab_path ${dataset}/wd_src.vocab \
         --tgt_vocab_path ${dataset}/tgt.vocab \
