@@ -42,5 +42,5 @@ If you run our code step by step with two RTX-3090 GUPs, you'll get the same or 
 
 | BLEU-4 | METEOR | ROUGE-L | ACC-eq |
 | :----: | :----: | :-----: | :----: |
-| 0.392  | 0.375  |  0.630  | 0.548  |
+| 0.399  | 0.377  |  0.637  | 0.544  |
 
